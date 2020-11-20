@@ -1,7 +1,7 @@
 // content.js
 (function(){
     console.log("%cUi Video Tools Extension", "background: #000; color: #00a0df; font-size: 24px; font-family: Monospace; padding : 5px 234px 5px 10px;");
-    addFullScreenCss();
+    addCss();
     function getNewEmberByClassName(className, cb){
 
         function foundIt (element, node, mutation){
@@ -112,31 +112,50 @@
         }
     }
 
-    function addFullScreenCss(){
-        var sheet = window.document.styleSheets[0];
-        sheet.insertRule(`.myTestClass {
-        z-index: 10000!important;
-        left: unset!important;
-        margin-left: unset!important;
-        width: 100%!important;
-        height: 100%!important;
-        top: 0px!important;
-        margin-top: unset!important;
-        opacity: 1!important;
-     }`, sheet.cssRules.length);
+    function addCss(){
+        var sheet = document.styleSheets[document.styleSheets.length-1];
+        /* expanded window sizing */
+        sheet.insertRule(`
+        .myTestClass {
+            z-index: 10000!important;
+            left: unset!important;
+            margin-left: unset!important;
+            width: 100%!important;
+            height: 100%!important;
+            top: 0px!important;
+            margin-top: unset!important;
+            opacity: 1!important;
+        }`);
+        
+        /* Increase the clickable area of the play pause button */
+        sheet.insertRule(`
+        .video-player-control--play-pause {
+            height: 100%;
+            width: 30px;
+            margin: unset!important;
+            padding: 5px 8px;
+        }`
+        , sheet.cssRules.length);
     }
 
 
 
 
-
-
-
-
-
-
-
-
+    
+    function reStyleElements(){
+        
+        //Expand clickable area of play/pause button..
+        var sheet = window.document.styleSheets[0];
+            sheet.insertRule(``, sheet.cssRules.length);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
 
 
 
