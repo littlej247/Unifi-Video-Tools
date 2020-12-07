@@ -1,6 +1,7 @@
 // content.js
 (function(){
     console.log("%cUi Video Tools Extension", "background: #000; color: #00a0df; font-size: 24px; font-family: Monospace; padding : 5px 234px 5px 10px;");
+    
     addCss();
     function getNewEmberByClassName(className, cb){
 
@@ -49,74 +50,111 @@
     getNewEmberByClassName('mainSubView--liveViews', (element)=>{
         console.log("Running content script");
         let header = element.querySelector('header.mainSubView__header');
-        fullTabIcon(element, header);
+        addFullPageIcon_live(element, header);
     });
 
-    function fullTabIcon(node, header){
-        //debugger;
-        let rightDiv = header.querySelector('div.right');
+    // Starting point for new watchRecordingPanel.
+    getNewEmberByClassName('watchRecordingPanel', (element)=>{
+        console.log("Running watchRecordingPanel");
+        let controls = element.querySelector('div.video-player--controls');
+        addFullPageIcon_recording(element, controls);
+    });
 
+
+    /* Add expand button to the recording player */
+    function addFullPageIcon_recording(node, bar){
+
+        let videoContainer = node.querySelector("div.recording-player")
+        let button = fullPageButton(videoContainer, {showExit:false, 
+            onFullPage: ()=>{
+                videoContainer.querySelector('.video-player--controls').style.transform = 'unset';
+            },
+            onExit:()=>{
+                videoContainer.querySelector('.video-player--controls').style.transform = '';
+        }});
+
+        button.classList.add('button__icon', 'ubnt-icon--arrows-updown-leftright', 'tools-player-button');
+        button.style.margin ="5px 10px";
+        bar.appendChild(button);
+    }
+    
+    
+    /* Add expand button to the live-view header */
+    function addFullPageIcon_live(node, header){
+
+        let rightDiv = header.querySelector('div.right');
         let icon = document.createElement('span');
-        icon.classList.add('button__icon', 'ubnt-icon--arrows-updown-leftright');
         let label = document.createElement('span');
-        label.innerText = 'Expand';
-        let button = document.createElement('button');
+        let videoContainer = node.querySelector('.camera-grid');
+        let button = fullPageButton(videoContainer);
+
+        icon.classList.add('button__icon', 'ubnt-icon--arrows-updown-leftright');
+        label.innerText = 'Fullpage';
         button.classList.add('appTextButton');
         button.appendChild(icon);
         button.appendChild(label);
         rightDiv.appendChild(button);
-
-        button.onclick=(e)=>{
-            console.log('you clicked me... how dare you!!..');
-
-            var b = document.querySelector('body');
-            var v = document.querySelector('.camera-grid');
-            v.classList.add('myTestClass');
-            var parent = v.parentNode;
-
-            b.appendChild(v);
-            /*
-            v.style.marginTop = 'unset'
-            v.style.marginLeft = 'unset'
-            v.style.left = 'unset'
-            v.style.width = '100%'
-            v.style.height = '100%'
-            v.style.zIndex="10000";
-            */
-
-            //Add escape button
-            var e = document.createElement('div');
-            e.classList.add('appMainButton', 'appGlobalHeader__content--right');
-            e.style.zIndex="10000";
-
-            e.innerText = 'Exit';
-            b.appendChild(e);
-            e.onclick = ()=>{
-                console.log('exit now.');
-                parent.appendChild(v);
-                v.classList.remove('myTestClass');
-                e.remove();
-            }
-
-
-
-
-        }
-
-        function exitFullScreen(videoElement, originalParent, exitButton){
-            //Move the videoElement back,
-
-            //delete exitButton
-
-
-        }
     }
 
+
+    function fullPageButton(videoContainer, options={}){
+
+        //Set default options
+        options.fullPage=false;
+        if (options.showExit === undefined) options.showExit = true;
+        
+        var originalParent = videoContainer.parentNode;
+        var exitButton;
+
+        //Create Button
+        let button = document.createElement('span');
+        button.onclick = ()=>{
+            if(options.fullPage === false ){
+                goFullPage();
+            } else {
+                restore();
+            }
+        }
+
+        function goFullPage(){
+            options.fullPage = true;
+
+            var b = document.querySelector('body');
+            b.appendChild(videoContainer);
+            videoContainer.classList.add('tools-videoOverlay');
+
+            //Add escape button
+            if (options.showExit === true){
+                exitButton = document.createElement('div');
+                exitButton.classList.add('icon', 'ubnt-icon--x', 'appMainButton', 'appGlobalHeader__content--right');
+                exitButton.style.zIndex="10000";
+                exitButton.style.top="0px";
+                exitButton.onclick = restore;
+                b.appendChild(exitButton);   
+            }
+
+            if (options.onFullPage) options.onFullPage();
+        }
+
+        function restore(){
+            options.fullPage = false;
+
+            originalParent.appendChild(videoContainer);
+            videoContainer.classList.remove('tools-videoOverlay');
+
+            if (exitButton) exitButton.remove();
+            if (options.onExit) options.onExit(parent, videoContainer);
+        }
+
+        return button
+    }
+    
     function addCss(){
         var sheet = document.styleSheets[document.styleSheets.length-1];
         /* expanded window sizing */
+        //z-index: 10000 is just enough to cover the username and icon.
         sheet.insertRule(`
-        .myTestClass {
+        .tools-videoOverlay {
             z-index: 10000!important;
             left: unset!important;
             margin-left: unset!important;
@@ -125,11 +163,13 @@
             top: 0px!important;
             margin-top: unset!important;
             opacity: 1!important;
+            position: absolute;
         }`);
         
-        /* Increase the clickable area of the play pause button */
+        /* Increase the clickable area of the play/pause button */
         sheet.insertRule(`
-        .video-player-control--play-pause {
+        .video-player-control--play-pause,
+        .tools-player-button{
             height: 100%;
             width: 30px;
             margin: unset!important;
@@ -137,27 +177,6 @@
         }`
         , sheet.cssRules.length);
     }
-
-
-
-
-    
-    function reStyleElements(){
-        
-        //Expand clickable area of play/pause button..
-        var sheet = window.document.styleSheets[0];
-            sheet.insertRule(``, sheet.cssRules.length);
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-
-
 
 })();
 
